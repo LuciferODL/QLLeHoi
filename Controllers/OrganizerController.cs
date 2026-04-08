@@ -20,11 +20,45 @@ namespace QLLeHoi.Controllers
         }
 
         // GET: Organizer
+        /*
         public async Task<IActionResult> Index()
         {
             return View(await _context.Organizer.ToListAsync());
         }
-
+        */
+        //Tim kiem + phan trang
+        public async Task<IActionResult> Index(string searchString, string sortOrder, int PageNumber = 1, int PageSize = 3)
+        {
+            var organizers = from o in _context.Organizer
+                             select o;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                organizers = organizers.Where(s => s.Name!.Contains(searchString));
+            }
+            //Sap xep
+            if(sortOrder=="desc")
+            {
+                organizers = organizers.OrderByDescending(s => s.Name);
+            }
+            else
+            {
+                organizers = organizers.OrderBy(s => s.Name);
+            }
+            var totalItems = await organizers.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+            //lay dl theo trang
+            var organizersInPage = await organizers.Skip((PageNumber - 1) * PageSize).Take(PageSize).ToListAsync();
+            //lay dl cho view thong qua ViewModel
+            var viewModel = new OrganizerPageViewModel
+            {
+                Organizers = organizersInPage,
+                SearchString = searchString,
+                CurrentPage = PageNumber,
+                TotalPages = totalPages,
+                SortOrder = sortOrder
+            };
+            return View(viewModel);
+        }
         // GET: Organizer/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -153,17 +187,20 @@ namespace QLLeHoi.Controllers
         {
             return _context.Organizer.Any(e => e.OrganizerId == id);
         }
-    //Tim kiem
-    public async Task<IActionResult> Search(string searchString)
-        {
-            var organizers = from o in _context.Organizer
-                             select o;
-            if (!String.IsNullOrEmpty(searchString))
+        //Tim kiem
+        /*
+        public async Task<IActionResult> Search(string searchString)
             {
-                organizers = organizers.Where(s => s.Name!.Contains(searchString));
+                var organizers = from o in _context.Organizer
+                                 select o;
+                if (!String.IsNullOrEmpty(searchString))
+                {
+                    organizers = organizers.Where(s => s.Name!.Contains(searchString));
+                }
+                return View(await organizers.ToListAsync());
             }
-            return View(await organizers.ToListAsync());
         }
+        */
     }
 }
 
